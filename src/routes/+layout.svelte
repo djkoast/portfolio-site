@@ -1,3 +1,9 @@
+<svelte:head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</svelte:head>
+
 <script>
   import '../app.css';
   import { onMount } from 'svelte';
@@ -8,16 +14,12 @@
   let iframeElement;
 
   onMount(() => {
-    // Load SoundCloud Widget API (browser only)
     const script = document.createElement('script');
     script.src = 'https://w.soundcloud.com/player/api.js';
     script.async = true;
     script.onload = initWidget;
     document.body.appendChild(script);
-
-    // Expose the showPlayerAndPlay function globally (browser only)
     window.__startMixPlayer = showPlayerAndPlay;
-
     return () => {
       if (widget) widget.unbind();
       delete window.__startMixPlayer;
@@ -27,37 +29,22 @@
   function initWidget() {
     if (window.SC && iframeElement) {
       widget = window.SC.Widget(iframeElement);
-      widget.bind(window.SC.Widget.Events.PLAY, () => {
-        playerStore.update(p => ({ ...p, playing: true }));
-      });
-      widget.bind(window.SC.Widget.Events.PAUSE, () => {
-        playerStore.update(p => ({ ...p, playing: false }));
-      });
-      widget.bind(window.SC.Widget.Events.FINISH, () => {
-        playerStore.update(p => ({ ...p, playing: false }));
-      });
+      widget.bind(window.SC.Widget.Events.PLAY, () => playerStore.update(p => ({ ...p, playing: true })));
+      widget.bind(window.SC.Widget.Events.PAUSE, () => playerStore.update(p => ({ ...p, playing: false })));
+      widget.bind(window.SC.Widget.Events.FINISH, () => playerStore.update(p => ({ ...p, playing: false })));
     }
   }
 
   function togglePlay() {
     if (!widget) return;
-    widget.isPaused((paused) => {
-      if (paused) {
-        widget.play();
-      } else {
-        widget.pause();
-      }
-    });
+    widget.isPaused((paused) => { if (paused) widget.play(); else widget.pause(); });
   }
 
   function showPlayerAndPlay() {
     playerStore.update(p => ({ ...p, visible: true }));
-    setTimeout(() => {
-      if (widget) widget.play();
-    }, 500);
+    setTimeout(() => { if (widget) widget.play(); }, 500);
   }
 
-  // Derived store value for reactivity
   let player = $derived($playerStore);
 </script>
 
@@ -71,11 +58,7 @@
         <a href="/blog" class="text-sm text-slate-600 dark:text-slate-400 hover:text-amber-600 transition-colors">Blog</a>
         <a href="/#skills" class="text-sm text-slate-600 dark:text-slate-400 hover:text-amber-600 transition-colors">Skills</a>
         <a href="/#contact" class="text-sm text-slate-600 dark:text-slate-400 hover:text-amber-600 transition-colors">Contact</a>
-        <button
-          onclick={() => document.documentElement.classList.toggle('dark')}
-          class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Toggle dark mode"
-        >
+        <button onclick={() => document.documentElement.classList.toggle('dark')} class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Toggle dark mode">
           <span class="block dark:hidden">🌙</span>
           <span class="hidden dark:block">☀️</span>
         </button>
@@ -98,28 +81,14 @@
           </div>
         </div>
         <button onclick={togglePlay} class="p-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-md">
-          {#if player.playing}
-            ⏸️
-          {:else}
-            ▶️
-          {/if}
+          {#if player.playing}⏸️{:else}▶️{/if}
         </button>
-        <button onclick={() => playerStore.update(p => ({ ...p, visible: false }))} class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Close player">
-          ✕
-        </button>
+        <button onclick={() => playerStore.update(p => ({ ...p, visible: false }))} class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Close player">✕</button>
       </div>
     </div>
   {/if}
 
-  <!-- Hidden SoundCloud iframe (with title for accessibility) -->
-  <iframe
-    id="soundcloud-player"
-    bind:this={iframeElement}
-    title="SoundCloud player"
-    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/978058357%3Fsecret_token%3Ds-dgGT0EGdG8p&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&buying=false&sharing=false&download=false&show_artwork=false"
-    style="display: none;"
-    allow="autoplay"
-  ></iframe>
+  <iframe id="soundcloud-player" bind:this={iframeElement} title="SoundCloud player" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/978058357%3Fsecret_token%3Ds-dgGT0EGdG8p&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&buying=false&sharing=false&download=false&show_artwork=false" style="display: none;" allow="autoplay"></iframe>
 
   <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-400">
     © 2026 Koast. Built with SvelteKit & Tailwind.
